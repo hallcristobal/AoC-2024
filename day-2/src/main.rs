@@ -1,6 +1,5 @@
 use std::time::Instant;
 const MILLIS_PER_SEC: u64 = 1_000;
-
 const INPUT: &'static str = include_str!("../input.txt");
 
 #[derive(PartialEq, Eq, Clone, Copy)]
@@ -58,16 +57,25 @@ fn part1(input: &str) -> usize {
 
 fn is_line_valid(line: Vec<i64>) -> bool {
     for idx in -1..line.len() as isize {
-        let mut line = line.clone();
-        if idx >= 0 {
-            line.remove(idx as usize);
-        }
-        let direction: Direction = (line[0] - line[1]).into();
-
-        let is_good = !line
+        let mut iter = line
             .iter()
-            .zip(line.iter().skip(1))
-            .any(|(i1, i2)| !is_valid_change(i1, i2, direction));
+            .enumerate()
+            .filter(|(i, _)| *i as isize != idx)
+            .peekable();
+
+        let mut iter2 = line
+            .iter()
+            .enumerate()
+            .filter(|(i, _)| *i as isize != idx)
+            .skip(1)
+            .peekable();
+
+        let direction: Direction = (iter.peek().unwrap().1 - iter2.peek().unwrap().1).into();
+
+        let is_good = !iter
+            .zip(iter2)
+            .any(|((_, i1), (_, i2))| !is_valid_change(i1, i2, direction));
+
         if is_good {
             return is_good;
         }
@@ -106,7 +114,6 @@ fn main() {
 
     println!(
         "Part1: {} ({:.3}ms), Part2: {} ({:.3}ms)",
-        // "Part1: {} ({:.3}ms)",
         sol1,
         dur.as_secs_f64() * (MILLIS_PER_SEC as f64), // millis
         sol2,
@@ -116,7 +123,7 @@ fn main() {
 
 #[cfg(test)]
 mod tests {
-    use super::part1;
+    use super::{part1, part2};
 
     #[test]
     fn test_inputs() {
@@ -132,5 +139,16 @@ mod tests {
         assert_eq!(part1(test_input_4.0), test_input_4.1);
         assert_eq!(part1(test_input_5.0), test_input_5.1);
         assert_eq!(part1(test_input_6.0), test_input_6.1);
+    }
+
+    #[test]
+    fn test_inputs_part2() {
+        let test_input_1 = r#"7 6 4 2 1
+1 2 7 8 9
+9 7 6 2 1
+1 3 2 4 5
+8 6 4 4 1
+1 3 6 7 9"#;
+        assert_eq!(part2(test_input_1), 4);
     }
 }
